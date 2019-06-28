@@ -29,6 +29,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UNUserNotific
         
         let uuid = UUID(uuidString: "6fd8c37b-ebf6-43ae-b2eb-343e9c2730c4")!
         beaconRegion = CLBeaconRegion(proximityUUID: uuid, major: 3755, minor: 10926, identifier: uuid.uuidString)
+        beaconRegion.notifyOnEntry = true
+        beaconRegion.notifyOnExit = true
+        beaconRegion.notifyEntryStateOnDisplay = true
         
         if CLLocationManager.authorizationStatus() != .authorizedAlways {
             locationManager.requestAlwaysAuthorization()
@@ -53,22 +56,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UNUserNotific
             print("authorisation not granted")
         }
     }
-    
-//    func startScanning(){
-//        let uuid = UUID(uuidString: "6fd8c37b-ebf6-43ae-b2eb-343e9c2730c4")!
-//        beaconRegion = CLBeaconRegion(proximityUUID: uuid, major: 3755, minor: 10926, identifier: "MyBeacon")
-//        locationManager.startMonitoring(for: beaconRegion)
-//        locationManager.startRangingBeacons(in: beaconRegion)
-//    }
 
-    
     func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
         print("Did determine state for region \(region)")
         if state == .inside {
             locationManager.startRangingBeacons(in: beaconRegion)
-            postNotification()
         } else {
-            print("outside")
+            postNotification(withBody: "outside")
         }
     }
     
@@ -77,11 +71,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UNUserNotific
     }
     
     func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
+        postNotification(withBody: "Enter")
         locationManager.startRangingBeacons(in: beaconRegion)
         print("didEnter")
     }
     
     func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
+        postNotification(withBody: "Exit")
         locationManager.stopRangingBeacons(in: beaconRegion)
         print("didExit")
     }
@@ -91,7 +87,6 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UNUserNotific
             update(distance: beacons[0].proximity)
             print(beacons[0].accuracy)
             print(beacons[0].rssi)
-            
         } else {
             update(distance: .unknown)
         }
@@ -123,10 +118,10 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UNUserNotific
     }
     
     
-    func postNotification() {
+    func postNotification(withBody body: String) {
         let content = UNMutableNotificationContent()
-        content.title = "Beacon Detected!"
-        content.body = "Enter Area!"
+        content.title = body
+        content.body = body
         content.sound = UNNotificationSound.default
         let request = UNNotificationRequest(identifier: "EntryNotification", content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request) { error in
